@@ -25,6 +25,7 @@ public class CommonMapper {
 
         UserMessagesEntity userMessagesEntity = new UserMessagesEntity();
         userMessagesEntity.setId(request.getMsgId());
+        userMessagesEntity.setMsgGroupId(request.getMsgGroupId());
         userMessagesEntity.setCountry(request.getCountry());
         userMessagesEntity.setServiceType(request.getServiceType());
         userMessagesEntity.setFrom(request.getFrom());

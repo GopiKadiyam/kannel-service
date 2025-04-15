@@ -9,6 +9,7 @@ import com.gk.kannel.entities.UserWiseWebhookEntity;
 import com.gk.kannel.exception.EntityNotFoundException;
 import com.gk.kannel.model.CustomerWebHookReq;
 import com.gk.kannel.model.MessageRequest;
+import com.gk.kannel.model.UpdateMsgReq;
 import com.gk.kannel.model.WebEngageWebHookReq;
 import com.gk.kannel.repository.MessageWebhookStatusRepository;
 import com.gk.kannel.repository.UserMessagesInfoRepository;
@@ -69,6 +70,7 @@ public class StoreDataService {
             userMessagesInfoEntity.setUserId(tenantId);
             userMessagesInfoEntity.setMsgStatus(MsgStatus.CREATED);
             userMessagesInfoEntity.setSmsSentOn(request.getSmsSentOn());
+            userMessagesInfoEntity.setMsgGroupId(request.getMsgGroupId());
 
             userMessagesInfoEntity.setUserMessage(userMessagesEntity);
             userMessagesEntity.setUserMessagesInfo(userMessagesInfoEntity);
@@ -115,7 +117,8 @@ public class StoreDataService {
             UserMessagesInfoEntity userMessagesInfoEntity = userMessagesEntity.getUserMessagesInfo();
             userMessagesInfoEntity.setMsgStatus(MsgStatus.DLR_CB_SUCCESS);
 
-            String dlrStatusString = request.getStatusJson();
+            UpdateMsgReq updateMsgReq = request.getUpdateMsgReq();
+            String dlrStatusString = updateMsgReq.getStatusJson();
             userMessagesInfoEntity.setDlrDeliveredOn(convertToGMTLocalDateTime(extractFieldFromSource(dlrStatusString, "done date:([^\\s]+)").trim()));
             SMSStatus smsStatus = SMSStatus.fromValue(extractFieldFromSource(dlrStatusString, "stat:([^\\s]+)").trim());
             userMessagesInfoEntity.setDlrStatus(smsStatus);

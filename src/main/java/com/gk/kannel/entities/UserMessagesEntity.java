@@ -66,6 +66,7 @@ public class UserMessagesEntity {
     private String webEngageVersion;
     @Enumerated(EnumType.STRING)
     private CRMType crmMsgType;
+    private String msgGroupId;
 
     @OneToOne(fetch = FetchType.LAZY,cascade =  CascadeType.ALL,mappedBy = "userMessage")
     private UserMessagesInfoEntity userMessagesInfo;

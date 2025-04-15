@@ -7,21 +7,20 @@ import com.gk.kannel.utils.enums.KafkaMsgType;
 import com.gk.kannel.utils.enums.MessageType;
 import com.gk.kannel.utils.enums.MsgStatus;
 import com.gk.kannel.utils.enums.ServiceType;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.Map;
 
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Setter
-@Getter
 public class MessageRequest {
     private String msgId;
     @NotNull(message = "'country' field is mandatory and cannot be null or empty. The value should be in IN,INTL ")
@@ -34,11 +33,11 @@ public class MessageRequest {
     private String to;
     @NotEmpty(message = "'body' field is mandatory and cannot be null or empty")
     private String body;
-    @NotEmpty(message = "'templateId' is mandatory and cannot be null or empty")
-    @Size(min = 19, max = 19)
+    @NotBlank(message = "'templateId' is mandatory and cannot be null or empty")
+    @Size(min = 19, max = 19, message = "templateId must be exactly 19 characters")
     private String templateId;
-    @NotEmpty(message = "'entityId' is mandatory and cannot be null or empty")
-    @Size(min = 19, max = 19)
+    @NotBlank(message = "'entityId' is mandatory and cannot be null or empty")
+    @Size(min = 19, max = 19, message = "entityId must be exactly 19 characters")
     private String entityId;
     @NotNull(message = "'messageType' mandatory and cannot be null or empty.The value should be in U,N,A ")
     private MessageType messageType;
@@ -50,15 +49,13 @@ public class MessageRequest {
     private String crmMsgId;
     private String webEngageVersion;
     private CRMType crmMsgType;
+    private String msgGroupId;
+    private Integer smsLength;
+    private Integer credits;
     private LocalDateTime smsSentOn;
+
+    private UpdateMsgReq updateMsgReq;
 
     private KafkaMsgType kafkaMsgType;
     private MsgStatus msgStatus;
-
-    private String statusJson;
-    private String type;
-    private String pId;
-    private String smscId;
-    private String tm;
-    private String dlrUrl;
 }

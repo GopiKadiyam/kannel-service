@@ -35,6 +35,7 @@ public class UserMessagesInfoEntity{
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "msg_id", nullable = false)
     private UserMessagesEntity userMessage;
+    private String msgGroupId;
     @Column(name = "user_id",nullable = false)
     private String userId;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "GMT")

@@ -60,16 +60,13 @@ public class SendSMSToKannelConsumer {
         processMessageToKannel(record.key(), record.value());
     }
 
-//    @Transactional
+    //    @Transactional
     public void processMessageToKannel(String tenantId, Object msg) {
         MessageRequest request = (MessageRequest) msg;
         if (KafkaMsgType.INSERT_MSG == request.getKafkaMsgType()) {
             asyncOperations.createMsgReq(tenantId, request);
             UserEntity userEntity = userRepository.findById(request.getTenantId())
                     .orElseThrow(() -> new EntityNotFoundException("tenantId", "tenantId " + tenantId + " not found"));
-
-            log.info("GOPII  {}",userEntity.getUserServices().stream().map(UserWiseServiceTypeEntity::getServiceType).toList());
-            log.info("GOPII  {}",request.getServiceType().getValue());
             UserWiseServiceTypeEntity uwste = userEntity.getUserServices().stream()
                     .filter(us -> us.getServiceType().getName().equalsIgnoreCase(request.getServiceType().getValue()))
                     .findFirst()
