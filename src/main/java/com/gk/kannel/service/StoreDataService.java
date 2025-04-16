@@ -157,7 +157,8 @@ public class StoreDataService {
                 req.setContentTemplateId(userMessagesEntity.getTemplateId());
                 req.setPrincipalEntityId(userMessagesEntity.getEntityId());
                 response = restTemplate.postForEntity(webhookEntity.getWebhookUrl(), req, Object.class);
-            } else {
+            }
+            else {
                 CustomerWebHookReq customerWebHookReq = commonMapper.userMessagesEntityToCustomerWebHookReq(userMessagesEntity);
                 customerWebHookReq.setSuccess(customerWebHookReq.getStatus().equalsIgnoreCase("DELIVRD"));
                 response = restTemplate.postForEntity(webhookEntity.getWebhookUrl(), customerWebHookReq, Object.class);
