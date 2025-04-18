@@ -1,4 +1,4 @@
-package com.gk.kannel.config;
+package com.gk.kannel.config.converters;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;

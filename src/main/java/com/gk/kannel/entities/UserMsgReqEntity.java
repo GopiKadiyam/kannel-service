@@ -1,6 +1,6 @@
 package com.gk.kannel.entities;
 
-import com.gk.kannel.config.MetadataConverter;
+import com.gk.kannel.config.converters.MetadataConverter;
 import com.gk.kannel.utils.enums.CRMType;
 import com.gk.kannel.utils.enums.Country;
 import com.gk.kannel.utils.enums.MessageType;

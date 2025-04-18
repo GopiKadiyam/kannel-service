@@ -26,6 +26,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.time.Instant;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static com.gk.kannel.utils.common.CommonUtils.encodeToSHA256;
 import static com.gk.kannel.utils.common.CommonUtils.encodeURL;
@@ -54,10 +56,12 @@ public class SendSMSToKannelConsumer {
     private String kannelBaseUrl;
     @Value("${is.test}")
     private boolean isTest;
+    @Autowired
+    private ExecutorService executorService;
 
     @KafkaListener(topics = "${sms.requests.topic}", groupId = "${spring.kafka.consumer.group-id}")
     public void consumeMessage(ConsumerRecord<String, Object> record) {
-        processMessageToKannel(record.key(), record.value());
+        executorService.submit(() -> processMessageToKannel(record.key(), record.value()));
     }
 
     //    @Transactional
@@ -124,7 +128,7 @@ public class SendSMSToKannelConsumer {
                 }
                 msgRequest.setKafkaMsgType(KafkaMsgType.UPDATE_MSG);
                 msgRequest.setTenantId(request.getTenantId());
-                UpdateMsgReq updateMsgReq=new UpdateMsgReq();
+                UpdateMsgReq updateMsgReq = new UpdateMsgReq();
                 updateMsgReq.setDlrSentOn(Instant.now());
                 msgRequest.setUpdateMsgReq(updateMsgReq);
                 updateMsgStatusProducer.postUpdateMessageToKafka(request.getTenantId(), msgRequest);
