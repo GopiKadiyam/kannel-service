@@ -1,7 +1,6 @@
 package com.gk.kannel.service.producers;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.gk.kannel.entities.TenantToPartition;
+import com.gk.kannel.entities.UserWiseKafkaPartition;
 import com.gk.kannel.model.MessageRequest;
 import com.gk.kannel.repository.TenantToPartitionRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -24,12 +23,12 @@ public class FailedMsgProducer {
     private TenantToPartitionRepository tenantToPartitionRepository;
 
     public void postFailedMsgToKafka(String tenantId, MessageRequest messageRequest) {
-        TenantToPartition tenantToPartition = tenantToPartitionRepository.findByUser_Id(tenantId)
+        UserWiseKafkaPartition userWiseKafkaPartition = tenantToPartitionRepository.findByUser_Id(tenantId)
                 .orElseThrow(() -> new RuntimeException("Partition not found for tenant: " + tenantId));
 
         ProducerRecord<String, MessageRequest> record = new ProducerRecord<>(
                 failedMsgRequestsTopic,
-                tenantToPartition.getPartitionNum(), // partition
+                userWiseKafkaPartition.getPartitionNum(), // partition
                 tenantId,                             // key
                 messageRequest                        // value
         );

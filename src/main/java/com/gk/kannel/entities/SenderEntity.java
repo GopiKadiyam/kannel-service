@@ -8,6 +8,8 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -29,31 +31,21 @@ public class SenderEntity {
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     @Column(name = "id", updatable = false, nullable = false, length = 36) // Store as string
     private String id;
-
     @NotBlank
-    @Size(max = 50)
     @Column(name = "sender_id",unique = true)
     private String senderId;
-
     @NotBlank
-    @Size(max = 500)
     private String description;
-
     @Enumerated(EnumType.STRING)
     private Country country;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "service_type")
     private ServiceType serviceType;
-
     @NotBlank
-    @Size(max = 50)
     @Column(name = "entity_id")
     private String entityId;
-
     @Column(name = "is_open")
     private String openFlag;
-
     @NotNull
     @Column(name = "status_flag")
     private boolean statusFlag;

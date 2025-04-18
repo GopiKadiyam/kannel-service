@@ -1,6 +1,8 @@
 package com.gk.kannel.entities;
 
-import com.gk.kannel.utils.enums.MsgWebhookStatus;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.gk.kannel.utils.enums.MsgStatus;
+import com.gk.kannel.utils.enums.SMSStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -10,31 +12,39 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "message_webhook_status")
-public class MessageWebhookStatus {
+@Table(name = "user_msg_req_status")
+public class UserMsgReqStatusEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @ManyToOne
-    @JoinColumn(name = "message_id")
-    private UserMessagesEntity userMessagesEntity;
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "msg_id", nullable = false)
+    private UserMsgReqEntity userMessage;
+    private String msgGroupId;
     @Column(name = "user_id", nullable = false)
     private String userId;
-    private String webhookId;
+    private Instant smsSentOn;
+    private Instant  dlrSentOn;
+    private Instant  dlrDeliveredOn;
     @Enumerated(EnumType.STRING)
-    private MsgWebhookStatus status;
-    private String response;
-    private int retryCount;
+    private SMSStatus dlrStatus;
+    private String dlrStatusCode;
+    private String dlrStatusDescription;
+    @Enumerated(EnumType.STRING)
+    private MsgStatus msgStatus;
 }

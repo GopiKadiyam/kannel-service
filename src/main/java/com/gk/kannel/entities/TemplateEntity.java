@@ -32,32 +32,21 @@ public class TemplateEntity {
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     @Column(name = "id", updatable = false, nullable = false, length = 36) // Store as string
     private String id;
-
-    @Size(max = 50)
     @Column(name = "template_id",unique = true)
     private String templateId;
-
     @NotBlank
-    @Size(max = 500)
     @Column(name = "template_body")
     private String templateBody;
-
     @NotBlank
-    @Size(max = 100)
     private String name;
-
     @NotBlank
-    @Size(max = 500)
     private String description;
-
     @ManyToOne(optional = false)
     @JoinColumn(name = "sender_id")
     private SenderEntity sender;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "service_type")
     private ServiceType serviceType;
-
     @Column(name = "active_flag")
     private boolean activeFlag;
 

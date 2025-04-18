@@ -1,11 +1,10 @@
 package com.gk.kannel.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.gk.kannel.entities.MessageWebhookStatus;
-import com.gk.kannel.entities.UserEntity;
-import com.gk.kannel.entities.UserMessagesEntity;
-import com.gk.kannel.entities.UserMessagesInfoEntity;
-import com.gk.kannel.entities.UserWiseWebhookEntity;
+import com.gk.kannel.entities.WebhookCallbackStatus;
+import com.gk.kannel.entities.UserMsgReqEntity;
+import com.gk.kannel.entities.UserMsgReqStatusEntity;
+import com.gk.kannel.entities.UserWiseWebhookRegistryEntity;
 import com.gk.kannel.exception.EntityNotFoundException;
 import com.gk.kannel.model.CustomerWebHookReq;
 import com.gk.kannel.model.MessageRequest;
@@ -19,7 +18,6 @@ import com.gk.kannel.service.mappers.CommonMapper;
 import com.gk.kannel.service.producers.FailedMsgProducer;
 import com.gk.kannel.service.producers.UpdateMsgStatusProducer;
 import com.gk.kannel.utils.enums.CRMType;
-import com.gk.kannel.utils.enums.MessageType;
 import com.gk.kannel.utils.enums.MsgStatus;
 import com.gk.kannel.utils.enums.MsgWebhookStatus;
 import com.gk.kannel.utils.enums.SMSStatus;
@@ -29,6 +27,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
@@ -62,21 +61,21 @@ public class StoreDataService {
 
     public void createMsgReq(String tenantId, MessageRequest request) {
         try {
-            UserMessagesEntity userMessagesEntity = commonMapper.messageRequestToMessageEntity(request);
-            userMessagesEntity.setCallBackWebhook(request.getWebhookId() != null ?
+            UserMsgReqEntity userMsgReqEntity = commonMapper.messageRequestToMessageEntity(request);
+            userMsgReqEntity.setCallBackWebhook(request.getWebhookId() != null ?
                     userWiseWebhookRepository.findByWebhookId(request.getWebhookId()).orElse(null) : null);
 
-            UserMessagesInfoEntity userMessagesInfoEntity = new UserMessagesInfoEntity();
-            userMessagesInfoEntity.setUserId(tenantId);
-            userMessagesInfoEntity.setMsgStatus(MsgStatus.CREATED);
-            userMessagesInfoEntity.setSmsSentOn(request.getSmsSentOn());
-            userMessagesInfoEntity.setMsgGroupId(request.getMsgGroupId());
+            UserMsgReqStatusEntity userMsgReqStatusEntity = new UserMsgReqStatusEntity();
+            userMsgReqStatusEntity.setUserId(tenantId);
+            userMsgReqStatusEntity.setMsgStatus(MsgStatus.CREATED);
+            userMsgReqStatusEntity.setSmsSentOn(request.getSmsSentOn());
+            userMsgReqStatusEntity.setMsgGroupId(request.getMsgGroupId());
 
-            userMessagesInfoEntity.setUserMessage(userMessagesEntity);
-            userMessagesEntity.setUserMessagesInfo(userMessagesInfoEntity);
+            userMsgReqStatusEntity.setUserMessage(userMsgReqEntity);
+            userMsgReqEntity.setUserMessagesInfo(userMsgReqStatusEntity);
             //userMessagesInfoRepository.save(userMessagesInfoEntity);
-            userMessagesEntity = userMessagesRepository.save(userMessagesEntity);
-            log.info("MsgReq created with id {} and status {} into db", request.getMsgId(), userMessagesEntity.getUserMessagesInfo().getMsgStatus());
+            userMsgReqEntity = userMessagesRepository.save(userMsgReqEntity);
+            log.info("MsgReq created with id {} and status {} into db", request.getMsgId(), userMsgReqEntity.getUserMessagesInfo().getMsgStatus());
         } catch (Exception e) {
             log.info("Unable create MsgReq with id {} and msg {} into db", request.getMsgId(), request);
             failedMsgProducer.postFailedMsgToKafka(tenantId, request);
@@ -87,17 +86,17 @@ public class StoreDataService {
     public void updateMsgWithProviderCallStatus(String tenantId, MessageRequest request) {
         try {
             MessageRequest finalMessage = request;
-            UserMessagesEntity userMessagesEntity = userMessagesRepository.findById(request.getMsgId())
+            UserMsgReqEntity userMsgReqEntity = userMessagesRepository.findById(request.getMsgId())
                     .orElseThrow(() -> {
                         failedMsgProducer.postFailedMsgToKafka(tenantId, finalMessage);
                         return new EntityNotFoundException("msgId", request.getMsgId() + " not present");
                     });
-            UserMessagesInfoEntity userMessagesInfoEntity = userMessagesEntity.getUserMessagesInfo();
-            userMessagesInfoEntity.setMsgStatus(request.getMsgStatus());
-            userMessagesInfoEntity.setDlrSentOn(LocalDateTime.now(ZoneOffset.UTC));
-            userMessagesEntity.setUserMessagesInfo(userMessagesInfoEntity);
+            UserMsgReqStatusEntity userMsgReqStatusEntity = userMsgReqEntity.getUserMessagesInfo();
+            userMsgReqStatusEntity.setMsgStatus(request.getMsgStatus());
+            userMsgReqStatusEntity.setDlrSentOn(request.getUpdateMsgReq() != null ? request.getUpdateMsgReq().getDlrSentOn() : null);
+            userMsgReqEntity.setUserMessagesInfo(userMsgReqStatusEntity);
             //userMessagesInfoEntity.setUpdatedOn(LocalDateTime.now(ZoneOffset.UTC));
-            userMessagesRepository.save(userMessagesEntity);
+            userMessagesRepository.save(userMsgReqEntity);
             log.info("msgId {} updated with status {} into db", request.getMsgId(), request.getMsgStatus());
         } catch (Exception e) {
             log.info("unable to update msgId {} with status {} into db", request.getMsgId(), request.getMsgStatus());
@@ -109,25 +108,25 @@ public class StoreDataService {
     public void updateMsgWithDLCBSuccess(String tenantId, MessageRequest request) {
         try {
             MessageRequest finalMessage = request;
-            UserMessagesEntity userMessagesEntity = userMessagesRepository.findById(request.getMsgId())
+            UserMsgReqEntity userMsgReqEntity = userMessagesRepository.findById(request.getMsgId())
                     .orElseThrow(() -> {
                         failedMsgProducer.postFailedMsgToKafka(tenantId, finalMessage);
                         return new EntityNotFoundException("msgId", "msgId :" + request.getMsgId() + " is not present");
                     });
-            UserMessagesInfoEntity userMessagesInfoEntity = userMessagesEntity.getUserMessagesInfo();
-            userMessagesInfoEntity.setMsgStatus(MsgStatus.DLR_CB_SUCCESS);
+            UserMsgReqStatusEntity userMsgReqStatusEntity = userMsgReqEntity.getUserMessagesInfo();
+            userMsgReqStatusEntity.setMsgStatus(MsgStatus.DLR_CB_SUCCESS);
 
             UpdateMsgReq updateMsgReq = request.getUpdateMsgReq();
             String dlrStatusString = updateMsgReq.getStatusJson();
-            userMessagesInfoEntity.setDlrDeliveredOn(convertToGMTLocalDateTime(extractFieldFromSource(dlrStatusString, "done date:([^\\s]+)").trim()));
+            userMsgReqStatusEntity.setDlrDeliveredOn(convertToGMTLocalDateTime(extractFieldFromSource(dlrStatusString, "done date:([^\\s]+)").trim()));
             SMSStatus smsStatus = SMSStatus.fromValue(extractFieldFromSource(dlrStatusString, "stat:([^\\s]+)").trim());
-            userMessagesInfoEntity.setDlrStatus(smsStatus);
-            userMessagesInfoEntity.setDlrStatusCode(extractFieldFromSource(dlrStatusString, "err:([^\\s]+)").trim());
-            userMessagesInfoEntity.setDlrStatusDescription(smsStatus.getDescription());
+            userMsgReqStatusEntity.setDlrStatus(smsStatus);
+            userMsgReqStatusEntity.setDlrStatusCode(extractFieldFromSource(dlrStatusString, "err:([^\\s]+)").trim());
+            userMsgReqStatusEntity.setDlrStatusDescription(smsStatus.getDescription());
 
-            userMessagesEntity.setUserMessagesInfo(userMessagesInfoEntity);
-            userMessagesEntity = userMessagesRepository.save(userMessagesEntity);
-            sendWebhookCall(tenantId, userMessagesEntity);
+            userMsgReqEntity.setUserMessagesInfo(userMsgReqStatusEntity);
+            userMsgReqEntity = userMessagesRepository.save(userMsgReqEntity);
+            sendWebhookCall(tenantId, userMsgReqEntity);
             log.info("msgId {} updated with status {} into db", request.getMsgId(), request.getMsgStatus());
         } catch (Exception e) {
             log.info("unable to update msgId {} with status {} into db", request.getMsgId(), request.getMsgStatus());
@@ -136,53 +135,58 @@ public class StoreDataService {
         }
     }
 
-    public void sendWebhookCall(String tenantId, UserMessagesEntity userMessagesEntity) {
-        UserWiseWebhookEntity webhookEntity = userMessagesEntity.getCallBackWebhook();
-        try {
-            ResponseEntity<Object> response;
-            if (webhookEntity.getCrmType() == CRMType.WEB_ENGAGE) {
-                WebEngageWebHookReq req = new WebEngageWebHookReq();
-                req.setVersion(userMessagesEntity.getWebEngageVersion());
-                req.setMessageId(userMessagesEntity.getCrmMsgId());
-                req.setToNumber(userMessagesEntity.getTo());
-                SMSStatus smsStatus = userMessagesEntity.getUserMessagesInfo().getDlrStatus();
-                if (SMSStatus.DELIVRD == smsStatus) {
-                    req.setStatus("sms_sent");
-                    req.setStatusCode(0);
-                } else {
-                    req.setStatus("sms_failed");
-                    req.setStatusCode(9988);
-                    req.setMessage(smsStatus.getDescription());
+    public void sendWebhookCall(String tenantId, UserMsgReqEntity userMsgReqEntity) {
+        UserWiseWebhookRegistryEntity webhookEntity = userMsgReqEntity.getCallBackWebhook();
+        if (webhookEntity != null) {
+            try {
+                ResponseEntity<Object> response = null;
+                if (userMsgReqEntity.getCrmMsgType() == null || userMsgReqEntity.getCrmMsgType() == CRMType.MT_ADAPTER) {
+                    CustomerWebHookReq customerWebHookReq = commonMapper.userMessagesEntityToCustomerWebHookReq(userMsgReqEntity);
+                    customerWebHookReq.setSuccess(customerWebHookReq.getStatus().equalsIgnoreCase("DELIVRD"));
+                    response = restTemplate.postForEntity(webhookEntity.getWebhookUrl(), customerWebHookReq, Object.class);
                 }
-                req.setContentTemplateId(userMessagesEntity.getTemplateId());
-                req.setPrincipalEntityId(userMessagesEntity.getEntityId());
-                response = restTemplate.postForEntity(webhookEntity.getWebhookUrl(), req, Object.class);
+                else if (userMsgReqEntity.getCrmMsgType() == CRMType.WEB_ENGAGE) {
+                    WebEngageWebHookReq req = new WebEngageWebHookReq();
+                    req.setVersion(userMsgReqEntity.getWebEngageVersion());
+                    req.setMessageId(userMsgReqEntity.getCrmMsgId());
+                    req.setToNumber(userMsgReqEntity.getTo());
+                    SMSStatus smsStatus = userMsgReqEntity.getUserMessagesInfo().getDlrStatus();
+                    if (SMSStatus.DELIVRD == smsStatus) {
+                        req.setStatus("sms_sent");
+                        req.setStatusCode(0);
+                    } else {
+                        req.setStatus("sms_failed");
+                        req.setStatusCode(9988);
+                        req.setMessage(smsStatus.getDescription());
+                    }
+                    req.setContentTemplateId(userMsgReqEntity.getTemplateId());
+                    req.setPrincipalEntityId(userMsgReqEntity.getEntityId());
+                    response = restTemplate.postForEntity(webhookEntity.getWebhookUrl(), req, Object.class);
+                } else {
+                    response = null;
+                }
+                if (response != null) {
+                    WebhookCallbackStatus webhookCallbackStatus = new WebhookCallbackStatus();
+                    webhookCallbackStatus.setUserMsgReqEntity(userMsgReqEntity);
+                    webhookCallbackStatus.setWebhookId(webhookEntity.getWebhookId());
+                    webhookCallbackStatus.setUserId(userMsgReqEntity.getUser().getId());
+                    if (response.getStatusCode().is2xxSuccessful()) {
+                        webhookCallbackStatus.setStatus(MsgWebhookStatus.SUCCESS);
+                    } else {
+                        webhookCallbackStatus.setStatus(MsgWebhookStatus.FAILED);
+                    }
+                    webhookCallbackStatus.setResponse(response.getStatusCode().toString());
+                    webhookCallbackStatus.setRetryCount(1);
+                    messageWebhookStatusRepository.save(webhookCallbackStatus);
+                    log.info("webhook url sent for msgId {} , with status {} ", userMsgReqEntity.getId(), webhookCallbackStatus.getStatus());
+                }
+            } catch (Exception e) {
+                //failedMsgProducer.postFailedMsgToKafka(tenantId, request);
+                log.info("failure while sending customer webhook call for tenantId {}, message {}", tenantId, userMsgReqEntity.toString());
+                e.printStackTrace();
             }
-            else {
-                CustomerWebHookReq customerWebHookReq = commonMapper.userMessagesEntityToCustomerWebHookReq(userMessagesEntity);
-                customerWebHookReq.setSuccess(customerWebHookReq.getStatus().equalsIgnoreCase("DELIVRD"));
-                response = restTemplate.postForEntity(webhookEntity.getWebhookUrl(), customerWebHookReq, Object.class);
-            }
-
-            MessageWebhookStatus messageWebhookStatus = new MessageWebhookStatus();
-            messageWebhookStatus.setUserMessagesEntity(userMessagesEntity);
-            messageWebhookStatus.setWebhookId(webhookEntity.getWebhookId());
-            messageWebhookStatus.setUserId(userMessagesEntity.getUser().getId());
-            if (response.getStatusCode().is2xxSuccessful()) {
-                messageWebhookStatus.setStatus(MsgWebhookStatus.SUCCESS);
-            } else {
-                messageWebhookStatus.setStatus(MsgWebhookStatus.FAILED);
-            }
-            messageWebhookStatus.setResponse(response.getStatusCode().toString());
-            messageWebhookStatus.setRetryCount(1);
-            messageWebhookStatusRepository.save(messageWebhookStatus);
-            log.info("webhook url sent for msgId {} , with status {} ", userMessagesEntity.getId(), messageWebhookStatus.getStatus());
-
-        } catch (Exception e) {
-            //failedMsgProducer.postFailedMsgToKafka(tenantId, request);
-            log.info("failure while sending customer webhook call for tenantId {}, message {}", tenantId, userMessagesEntity.toString());
-            e.printStackTrace();
         }
+
 
     }
 
@@ -195,7 +199,7 @@ public class StoreDataService {
         return null;
     }
 
-    private LocalDateTime convertToGMTLocalDateTime(String doneDate) {
+    private Instant convertToGMTLocalDateTime(String doneDate) {
         try {
             DateTimeFormatter inputFormatter;
             switch (doneDate.length()) {
@@ -209,8 +213,7 @@ public class StoreDataService {
             LocalDateTime localDateTime = LocalDateTime.parse(doneDate, inputFormatter);
             // Convert from IST (Asia/Kolkata) to UTC (GMT)
             ZonedDateTime istZonedDateTime = localDateTime.atZone(ZoneId.of("Asia/Kolkata"));
-            ZonedDateTime utcZonedDateTime = istZonedDateTime.withZoneSameInstant(ZoneId.of("UTC"));
-            return utcZonedDateTime.toLocalDateTime(); // Return as LocalDateTime in UTC
+            return istZonedDateTime.toInstant();
         } catch (Exception e) {
             log.info("Error while converting doneDate {}", doneDate);
             return null;

@@ -25,11 +25,11 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "user",
+@Table(name = "user_accounts",
         uniqueConstraints = {
                 @UniqueConstraint(columnNames = "username")
         })
-public class UserEntity {
+public class UserAccountEntity {
     @Id
     @GeneratedValue(generator = "UUID")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
@@ -47,12 +47,12 @@ public class UserEntity {
     private boolean activeFlag;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER,orphanRemoval = true)
-    private List<UserWiseServiceTypeEntity> userServices = new ArrayList<>();
+    private List<UserWiseServicePermissionEntity> userServices = new ArrayList<>();
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL,fetch = FetchType.EAGER, orphanRemoval = true)
     private List<UserWiseAPIKeyEntity> userApiKeys = new ArrayList<>();
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL,fetch = FetchType.EAGER, orphanRemoval = true)
-    private List<UserWiseWebhookEntity> userWebhooks = new ArrayList<>();
-    public UserEntity(String id) {this.id = id;
+    private List<UserWiseWebhookRegistryEntity> userWebhooks = new ArrayList<>();
+    public UserAccountEntity(String id) {this.id = id;
     }
 
 }

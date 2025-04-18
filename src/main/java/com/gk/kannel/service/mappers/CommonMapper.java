@@ -1,52 +1,48 @@
 package com.gk.kannel.service.mappers;
 
-import com.gk.kannel.entities.UserEntity;
-import com.gk.kannel.entities.UserMessagesEntity;
-import com.gk.kannel.entities.UserMessagesInfoEntity;
+import com.gk.kannel.entities.UserAccountEntity;
+import com.gk.kannel.entities.UserMsgReqEntity;
+import com.gk.kannel.entities.UserMsgReqStatusEntity;
 import com.gk.kannel.model.CustomerWebHookReq;
 import com.gk.kannel.model.MessageRequest;
-import com.gk.kannel.repository.UserWiseWebhookRepository;
 import com.gk.kannel.utils.enums.MessageType;
 import com.gk.kannel.utils.enums.SMSStatus;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.Map;
 
 @Component
 public class CommonMapper {
-    public static UserMessagesEntity messageRequestToMessageEntity(MessageRequest request) {
+    public static UserMsgReqEntity messageRequestToMessageEntity(MessageRequest request) {
         if (request == null) {
             return null;
         }
 
-        UserMessagesEntity userMessagesEntity = new UserMessagesEntity();
-        userMessagesEntity.setId(request.getMsgId());
-        userMessagesEntity.setMsgGroupId(request.getMsgGroupId());
-        userMessagesEntity.setCountry(request.getCountry());
-        userMessagesEntity.setServiceType(request.getServiceType());
-        userMessagesEntity.setFrom(request.getFrom());
-        userMessagesEntity.setTo(request.getTo());
-        userMessagesEntity.setBody(request.getBody());
-        userMessagesEntity.setTemplateId(request.getTemplateId());
-        userMessagesEntity.setEntityId(request.getEntityId());
-        userMessagesEntity.setMessageType(request.getMessageType());
-        userMessagesEntity.setCustomId(request.getCustomId());
-        userMessagesEntity.setFlash(request.isFlash());
-        userMessagesEntity.setCrmMsgId(request.getCrmMsgId());
-        userMessagesEntity.setWebEngageVersion(request.getWebEngageVersion());
-        userMessagesEntity.setCrmMsgType(request.getCrmMsgType());
-        userMessagesEntity.setSmsLength(request.getBody().length());
-        userMessagesEntity.setCredits(getUnits(request.getBody(), request.getMessageType()));
-        userMessagesEntity.setUser(new UserEntity(request.getTenantId()));
+        UserMsgReqEntity userMsgReqEntity = new UserMsgReqEntity();
+        userMsgReqEntity.setId(request.getMsgId());
+        userMsgReqEntity.setMsgGroupId(request.getMsgGroupId());
+        userMsgReqEntity.setCountry(request.getCountry());
+        userMsgReqEntity.setServiceType(request.getServiceType());
+        userMsgReqEntity.setFrom(request.getFrom());
+        userMsgReqEntity.setTo(request.getTo());
+        userMsgReqEntity.setBody(request.getBody());
+        userMsgReqEntity.setTemplateId(request.getTemplateId());
+        userMsgReqEntity.setEntityId(request.getEntityId());
+        userMsgReqEntity.setMessageType(request.getMessageType());
+        userMsgReqEntity.setCustomId(request.getCustomId());
+        userMsgReqEntity.setFlash(request.isFlash());
+        userMsgReqEntity.setCrmMsgId(request.getCrmMsgId());
+        userMsgReqEntity.setWebEngageVersion(request.getWebEngageVersion());
+        userMsgReqEntity.setCrmMsgType(request.getCrmMsgType());
+        userMsgReqEntity.setSmsLength(request.getSmsLength());
+        userMsgReqEntity.setCredits(request.getCredits());
+        userMsgReqEntity.setUser(new UserAccountEntity(request.getTenantId()));
         Map<String, String> map = request.getMetadata();
         if (map != null) {
-            userMessagesEntity.setMetadata(new HashMap<String, String>(map));
+            userMsgReqEntity.setMetadata(new HashMap<String, String>(map));
         }
-        return userMessagesEntity;
+        return userMsgReqEntity;
     }
 
     private static int getUnits(String msgBody, MessageType messageType) {
@@ -71,15 +67,15 @@ public class CommonMapper {
         return unit;
     }
 
-    public static CustomerWebHookReq userMessagesEntityToCustomerWebHookReq(UserMessagesEntity userMessagesEntity) {
-        if (userMessagesEntity == null) {
+    public static CustomerWebHookReq userMessagesEntityToCustomerWebHookReq(UserMsgReqEntity userMsgReqEntity) {
+        if (userMsgReqEntity == null) {
             return null;
         }
 
         CustomerWebHookReq customerWebHookReq = new CustomerWebHookReq();
-        customerWebHookReq.setId(userMessagesEntity.getId());
+        customerWebHookReq.setId(userMsgReqEntity.getId());
 
-        UserMessagesInfoEntity userMessagesInfo = userMessagesEntity.getUserMessagesInfo();
+        UserMsgReqStatusEntity userMessagesInfo = userMsgReqEntity.getUserMessagesInfo();
         if (userMessagesInfo != null) {
             SMSStatus dlrStatus = userMessagesInfo.getDlrStatus();
             if (dlrStatus != null) {
@@ -91,24 +87,24 @@ public class CommonMapper {
             customerWebHookReq.setDlrDeliveredOn(userMessagesInfo.getDlrDeliveredOn());
             customerWebHookReq.setMsgSubmittedOn(userMessagesInfo.getSmsSentOn());
         }
-        customerWebHookReq.setTenantId(userMessagesEntity.getUser().getId());
-        customerWebHookReq.setFrom(userMessagesEntity.getFrom());
-        customerWebHookReq.setCountry(userMessagesEntity.getCountry());
-        customerWebHookReq.setTo(userMessagesEntity.getTo());
-        customerWebHookReq.setCustomId(userMessagesEntity.getCustomId());
-        Map<String, String> map = userMessagesEntity.getMetadata();
+        customerWebHookReq.setTenantId(userMsgReqEntity.getUser().getId());
+        customerWebHookReq.setFrom(userMsgReqEntity.getFrom());
+        customerWebHookReq.setCountry(userMsgReqEntity.getCountry());
+        customerWebHookReq.setTo(userMsgReqEntity.getTo());
+        customerWebHookReq.setCustomId(userMsgReqEntity.getCustomId());
+        Map<String, String> map = userMsgReqEntity.getMetadata();
         if (map != null) {
             customerWebHookReq.setMetadata(new HashMap<String, String>(map));
         }
-        customerWebHookReq.setFlash(userMessagesEntity.isFlash());
-        if (userMessagesEntity.getServiceType() != null) {
-            customerWebHookReq.setServiceType(userMessagesEntity.getServiceType().name());
+        customerWebHookReq.setFlash(userMsgReqEntity.isFlash());
+        if (userMsgReqEntity.getServiceType() != null) {
+            customerWebHookReq.setServiceType(userMsgReqEntity.getServiceType().name());
         }
-        if (userMessagesEntity.getMessageType() != null) {
-            customerWebHookReq.setMessageType(userMessagesEntity.getMessageType().name());
+        if (userMsgReqEntity.getMessageType() != null) {
+            customerWebHookReq.setMessageType(userMsgReqEntity.getMessageType().name());
         }
-        customerWebHookReq.setTemplateId(userMessagesEntity.getTemplateId());
-        customerWebHookReq.setEntityId(userMessagesEntity.getEntityId());
+        customerWebHookReq.setTemplateId(userMsgReqEntity.getTemplateId());
+        customerWebHookReq.setEntityId(userMsgReqEntity.getEntityId());
 
         return customerWebHookReq;
     }

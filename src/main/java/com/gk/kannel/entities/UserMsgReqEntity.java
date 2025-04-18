@@ -29,8 +29,8 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "user_messages")
-public class UserMessagesEntity {
+@Table(name = "user_msg_requests")
+public class UserMsgReqEntity {
     @Id
     @Column(name = "id", updatable = false, nullable = false, length = 36)
     private String id;
@@ -43,9 +43,9 @@ public class UserMessagesEntity {
     @Column(name = "sms_to")
     private String to;
     private String body;
-    @Column(name = "template_id",length = 19)
+    @Column(name = "template_id", length = 19)
     private String templateId;
-    @Column(name = "entity_id",length = 19)
+    @Column(name = "entity_id", length = 19)
     private String entityId;
     @Enumerated(EnumType.STRING)
     private MessageType messageType;
@@ -56,18 +56,18 @@ public class UserMessagesEntity {
     private boolean flash;
     @ManyToOne
     @JoinColumn(name = "webhook_id")
-    private UserWiseWebhookEntity callBackWebhook;
+    private UserWiseWebhookRegistryEntity callBackWebhook;
     private Integer smsLength;
     private Integer credits;
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
-    private UserEntity user;
+    private UserAccountEntity user;
     private String crmMsgId;
     private String webEngageVersion;
     @Enumerated(EnumType.STRING)
     private CRMType crmMsgType;
     private String msgGroupId;
 
-    @OneToOne(fetch = FetchType.LAZY,cascade =  CascadeType.ALL,mappedBy = "userMessage")
-    private UserMessagesInfoEntity userMessagesInfo;
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "userMessage")
+    private UserMsgReqStatusEntity userMessagesInfo;
 }

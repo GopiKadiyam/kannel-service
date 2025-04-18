@@ -1,6 +1,7 @@
 package com.gk.kannel.entities;
 
-import com.gk.kannel.utils.enums.ApiKeyValidity;
+import com.gk.kannel.utils.enums.MsgWebhookStatus;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -10,8 +11,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,18 +21,19 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "user_wise_api_keys")
-public class UserWiseAPIKeyEntity {
+@Table(name = "webhook_callback_status")
+public class WebhookCallbackStatus {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private UserAccountEntity user;
-    @NotEmpty
-    private String apiKey;
-    @NotNull
+    @JoinColumn(name = "message_id")
+    private UserMsgReqEntity userMsgReqEntity;
+    @Column(name = "user_id", nullable = false)
+    private String userId;
+    private String webhookId;
     @Enumerated(EnumType.STRING)
-    private ApiKeyValidity validity;
-    private boolean activeFlag;
+    private MsgWebhookStatus status;
+    private String response;
+    private int retryCount;
 }

@@ -15,6 +15,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Map;
 
@@ -52,7 +53,7 @@ public class MessageRequest {
     private String msgGroupId;
     private Integer smsLength;
     private Integer credits;
-    private LocalDateTime smsSentOn;
+    private Instant smsSentOn;
 
     private UpdateMsgReq updateMsgReq;
 
