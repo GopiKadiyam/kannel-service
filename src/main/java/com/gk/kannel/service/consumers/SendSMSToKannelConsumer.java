@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
@@ -34,6 +35,7 @@ import static com.gk.kannel.utils.common.CommonUtils.encodeURL;
 
 @Component
 @Slf4j
+@RefreshScope
 public class SendSMSToKannelConsumer {
 
     @Value("${kannel.username}")
@@ -52,6 +54,8 @@ public class SendSMSToKannelConsumer {
     private RestTemplate restTemplate;
     @Autowired
     private ObjectMapper objectMapper;
+    @Value("${kannel.host.name}")
+    private String kannelHostName;
     @Value("${kannel.base.url}")
     private String kannelBaseUrl;
     @Value("${is.test}")
@@ -86,7 +90,7 @@ public class SendSMSToKannelConsumer {
             UriComponentsBuilder builder;
             ResponseEntity<String> response = null;
             try {
-                builder = UriComponentsBuilder.fromHttpUrl(kannelBaseUrl)
+                builder = UriComponentsBuilder.fromHttpUrl(kannelHostName + kannelBaseUrl)
                         .queryParam("username", kannelUsername)
                         .queryParam("password", kannelPassword)
                         .queryParam("text", encodeURL(request.getBody()))
@@ -146,7 +150,7 @@ public class SendSMSToKannelConsumer {
     }
 
     private String getDlrUrl(String msgId, String tenantId) {
-        return "http://localhost:8077/sms/status/update?status=%A&type=%d&pid=%F&smscid=%i&tm=%T&mid=" + msgId + "&tenid=" + tenantId;
+        return "http://send-sms-service:8077/sms/status/update?status=%A&type=%d&pid=%F&smscid=%i&tm=%T&mid=" + msgId + "&tenid=" + tenantId;
     }
 
     private String getTmId(boolean activeFlag, boolean encryptionFlag, String entityId, String teleMarketerId) {
